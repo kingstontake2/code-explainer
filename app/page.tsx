@@ -1,31 +1,28 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
 
+import { BrandBar } from "@/app/components/BrandBar";
+import { CodePane, languageLabel } from "@/app/components/CodePane";
+import { HistoryList } from "@/app/components/HistoryList";
+import { ResultsPane } from "@/app/components/ResultsPane";
+import {
+  clearHistory,
+  getHistorySnapshot,
+  getServerHistorySnapshot,
+  pushHistory,
+  subscribeHistory,
+  type HistoryEntry,
+} from "@/src/lib/history";
 import type {
   ApiErrorBody,
   Audience,
+  ExplainResponse,
   ExplainSuccessBody,
   QuotaStatus,
 } from "@/src/lib/types";
-import styles from "./page.module.css";
 
-const LANGUAGES = [
-  { value: "auto", label: "Auto-detect" },
-  { value: "javascript", label: "JavaScript" },
-  { value: "typescript", label: "TypeScript" },
-  { value: "python", label: "Python" },
-  { value: "java", label: "Java" },
-  { value: "go", label: "Go" },
-  { value: "rust", label: "Rust" },
-  { value: "c", label: "C" },
-  { value: "cpp", label: "C++" },
-  { value: "csharp", label: "C#" },
-  { value: "ruby", label: "Ruby" },
-  { value: "php", label: "PHP" },
-  { value: "sql", label: "SQL" },
-  { value: "other", label: "Other" },
-] as const;
+import styles from "./page.module.css";
 
 export default function Home() {
   const [code, setCode] = useState("");
@@ -34,9 +31,14 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
-  const [result, setResult] = useState<ExplainSuccessBody | null>(null);
+  const [result, setResult] = useState<ExplainResponse | null>(null);
   const [quota, setQuota] = useState<QuotaStatus | null>(null);
   const [copied, setCopied] = useState(false);
+  const history = useSyncExternalStore(
+    subscribeHistory,
+    getHistorySnapshot,
+    getServerHistorySnapshot,
+  );
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -63,8 +65,22 @@ export default function Home() {
       }
 
       const ok = data as ExplainSuccessBody;
-      setResult(ok);
+      setResult({
+        detectedLanguage: ok.detectedLanguage,
+        explanation: ok.explanation,
+        complexity: ok.complexity,
+        notes: ok.notes,
+      });
       setQuota(ok.quota);
+      pushHistory({
+        code,
+        language,
+        audience,
+        detectedLanguage: ok.detectedLanguage,
+        explanation: ok.explanation,
+        complexity: ok.complexity,
+        notes: ok.notes,
+      });
     } catch {
       setError("Network error. Is the server running?");
       setErrorCode("UPSTREAM");
@@ -72,6 +88,25 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
+  }
+
+  function restoreEntry(entry: HistoryEntry) {
+    setCode(entry.code);
+    setLanguage(entry.language);
+    setAudience(entry.audience);
+    setResult({
+      detectedLanguage: entry.detectedLanguage ?? languageLabel(entry.language),
+      explanation: entry.explanation,
+      complexity: entry.complexity,
+      notes: entry.notes,
+    });
+    setError(null);
+    setErrorCode(null);
+    setCopied(false);
+  }
+
+  function onClearHistory() {
+    clearHistory();
   }
 
   async function copyExplanation() {
@@ -87,131 +122,41 @@ export default function Home() {
   }
 
   return (
-    <main className={styles.main}>
-      <header className={styles.header}>
-        <h1 className={styles.brand}>Explain This</h1>
-        <p className={styles.tagline}>
-          Paste a code snippet. Get a plain-English explanation and complexity
-          notes.
-        </p>
-        {quota ? (
-          <p className={styles.quota} aria-live="polite">
-            Remaining today: {quota.remainingDay} · this minute:{" "}
-            {quota.remainingMinute}
-          </p>
-        ) : (
-          <p className={styles.quotaMuted}>
-            Free-tier budgets enforced before each Groq call.
-          </p>
-        )}
-      </header>
-
-      <form className={styles.form} onSubmit={onSubmit}>
-        <label className={styles.label} htmlFor="code">
-          Code
-        </label>
-        <textarea
-          id="code"
-          className={styles.textarea}
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Paste code here…"
-          rows={14}
-          spellCheck={false}
-          required
-        />
-
-        <div className={styles.controls}>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="language">
-              Language
-            </label>
-            <select
-              id="language"
-              className={styles.select}
-              value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-            >
-              {LANGUAGES.map((lang) => (
-                <option key={lang.value} value={lang.value}>
-                  {lang.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <fieldset className={styles.audience}>
-            <legend className={styles.label}>Audience</legend>
-            <label className={styles.radio}>
-              <input
-                type="radio"
-                name="audience"
-                value="beginner"
-                checked={audience === "beginner"}
-                onChange={() => setAudience("beginner")}
-              />
-              Beginner
-            </label>
-            <label className={styles.radio}>
-              <input
-                type="radio"
-                name="audience"
-                value="technical"
-                checked={audience === "technical"}
-                onChange={() => setAudience("technical")}
-              />
-              Technical
-            </label>
-          </fieldset>
+    <div className={styles.shell}>
+      <BrandBar quota={quota} />
+      <div className={styles.workspace}>
+        <div className={`${styles.column} ${styles.columnLeft}`}>
+          <CodePane
+            code={code}
+            language={language}
+            audience={audience}
+            loading={loading}
+            onCodeChange={setCode}
+            onLanguageChange={setLanguage}
+            onAudienceChange={setAudience}
+            onSubmit={onSubmit}
+          />
         </div>
-
-        <button
-          type="submit"
-          className={styles.button}
-          disabled={loading || !code.trim()}
-        >
-          {loading ? "Explaining…" : "Explain"}
-        </button>
-      </form>
-
-      {error ? (
-        <div
-          className={styles.error}
-          role="alert"
-          data-code={errorCode ?? undefined}
-        >
-          <strong>{errorCode ?? "ERROR"}</strong>
-          <span>{error}</span>
+        <div className={`${styles.column} ${styles.columnRight}`}>
+          <ResultsPane
+            result={result}
+            loading={loading}
+            error={error}
+            errorCode={errorCode}
+            copied={copied}
+            onCopy={copyExplanation}
+          />
         </div>
-      ) : null}
-
-      {result ? (
-        <section className={styles.results} aria-live="polite">
-          <div className={styles.panel}>
-            <div className={styles.panelHead}>
-              <h2>Explanation</h2>
-              <button
-                type="button"
-                className={styles.copy}
-                onClick={copyExplanation}
-              >
-                {copied ? "Copied" : "Copy"}
-              </button>
-            </div>
-            <p className={styles.body}>{result.explanation}</p>
+        {history.length > 0 ? (
+          <div className={styles.historySlot}>
+            <HistoryList
+              history={history}
+              onRestore={restoreEntry}
+              onClear={onClearHistory}
+            />
           </div>
-
-          <div className={styles.panel}>
-            <h2>Complexity</h2>
-            <p className={styles.body}>{result.complexity}</p>
-          </div>
-
-          <div className={styles.panel}>
-            <h2>Readability notes</h2>
-            <p className={styles.body}>{result.notes}</p>
-          </div>
-        </section>
-      ) : null}
-    </main>
+        ) : null}
+      </div>
+    </div>
   );
 }

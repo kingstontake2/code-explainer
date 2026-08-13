@@ -9,6 +9,7 @@ export const explainRequestSchema = z.object({
 });
 
 export const explainResponseSchema = z.object({
+  detectedLanguage: z.string().min(1),
   explanation: z.string().min(1),
   complexity: z.string().min(1),
   notes: z.string().min(1),

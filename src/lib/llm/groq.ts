@@ -29,7 +29,7 @@ function parseModelJson(raw: string): ExplainResponse {
   if (!result.success) {
     throw new AppError(
       "BAD_MODEL_OUTPUT",
-      "Model JSON did not match the expected { explanation, complexity, notes } shape.",
+      "Model JSON did not match the expected { detectedLanguage, explanation, complexity, notes } shape.",
       502,
     );
   }

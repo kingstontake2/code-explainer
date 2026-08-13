@@ -1,17 +1,23 @@
 :root {
-  --ink: #1a1f24;
-  --muted: #5c6770;
-  --line: #d5dce2;
-  --surface: #ffffff;
-  --wash: #f3f6f8;
-  --accent: #0f6e56;
-  --danger: #8b1e1e;
+  --ink: #1b2430;
+  --muted: #5f6b7a;
+  --line: #c5ced8;
+  --surface: #f7f9fb;
+  --surface-elevated: #ffffff;
+  --wash: #e9eef3;
+  --signal: #ff4d2e;
+  --signal-ink: #ffffff;
+  --signal-soft: color-mix(in srgb, var(--signal) 14%, transparent);
+  --danger: #9b1c1c;
   --danger-bg: #fdf2f2;
   --danger-line: #e8b4b4;
-  --page-top: #e8f2ee;
-  --page-bottom: #f7f4ef;
-  --font-sans: "IBM Plex Sans", "Source Sans 3", "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", "Source Code Pro", ui-monospace, monospace;
+  --page-top: #e4eaf0;
+  --page-bottom: #d5dde6;
+  --font-sans: var(--font-outfit), "Avenir Next", "Segoe UI", sans-serif;
+  --font-mono: var(--font-ibm-plex-mono), ui-monospace, monospace;
+  --radius-sm: 0.35rem;
+  --radius-md: 0.5rem;
+  --focus-ring: 2px solid var(--signal);
 }
 
 html {
@@ -27,9 +33,18 @@ body {
 body {
   margin: 0;
   color: var(--ink);
-  background:
-    radial-gradient(1200px 500px at 10% -10%, var(--page-top), transparent 55%),
-    linear-gradient(180deg, #fbfaf7 0%, var(--page-bottom) 100%);
+  background-color: var(--page-bottom);
+  background-image:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    radial-gradient(900px 420px at 8% -5%, var(--page-top), transparent 55%),
+    linear-gradient(180deg, #eef2f6 0%, var(--page-bottom) 100%);
+  background-size:
+    48px 48px,
+    48px 48px,
+    auto,
+    auto;
+  background-blend-mode: soft-light, soft-light, normal, normal;
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -42,4 +57,14 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -7,6 +7,7 @@ export type ExplainRequest = {
 };
 
 export type ExplainResponse = {
+  detectedLanguage: string;
   explanation: string;
   complexity: string;
   notes: string;
