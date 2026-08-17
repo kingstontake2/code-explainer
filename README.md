@@ -25,7 +25,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | Variable | Default | Purpose |
 |---|---|---|
 | `GROQ_API_KEY` | (required) | Groq API key |
-| `GROQ_MODEL` | `llama-3.3-70b-versatile` | Chat model |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | Chat model (replaces retired `llama-3.3-70b-versatile`) |
 | `RATE_LIMIT_PER_MINUTE` | `5` | App minute budget |
 | `RATE_LIMIT_PER_DAY` | `50` | App day budget |
 | `MAX_IN_FLIGHT` | `1` | Concurrent explains |

@@ -21,7 +21,7 @@ export type AppEnv = {
 export function getEnv(): AppEnv {
   return {
     groqApiKey: process.env.GROQ_API_KEY?.trim() || undefined,
-    groqModel: process.env.GROQ_MODEL?.trim() || "llama-3.3-70b-versatile",
+    groqModel: process.env.GROQ_MODEL?.trim() || "openai/gpt-oss-120b",
     rateLimitPerMinute: parsePositiveInt(process.env.RATE_LIMIT_PER_MINUTE, 5),
     rateLimitPerDay: parsePositiveInt(process.env.RATE_LIMIT_PER_DAY, 50),
     maxInFlight: Math.max(1, parsePositiveInt(process.env.MAX_IN_FLIGHT, 1)),
